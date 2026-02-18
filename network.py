@@ -207,6 +207,23 @@ def start_services(host, profile, tmp_dir):
             info(f"    → {host.name}:{port}/{proto} (pid {pid})\n")
     return pids
 
+# ── Find IFace ───────────────────────────────────────────────────────────────────────
+
+def detect_primary_iface():
+    result = subprocess.run(
+        ["ip", "route", "show", "default"],
+        capture_output=True, text=True
+    ).stdout.strip()
+
+    if not result:
+        raise RuntimeError("Could not detect default interface (no default route).")
+
+    parts = result.split()
+    if "dev" in parts:
+        return parts[parts.index("dev") + 1]
+
+    raise RuntimeError("Could not parse default route output.")
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 def build_network(topo_name="star", verbose=False):
@@ -244,7 +261,7 @@ def build_network(topo_name="star", verbose=False):
         subprocess.run(["ovs-ofctl", "add-flow", switch.name, "priority=0,actions=NORMAL"], check=False)
 
     # Bridge the physical interface and set Gateway IP
-    VM_IFACE = "eth0"
+    VM_IFACE = detect_primary_iface()
     info(f"\n[+] Bridging {VM_IFACE} and setting gateway 10.0.0.100\n")
     
     # Assign the Gateway IP to the switch bridge
