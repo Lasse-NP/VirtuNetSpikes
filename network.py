@@ -244,7 +244,7 @@ def build_network(topo_name="star", verbose=False):
         subprocess.run(["ovs-ofctl", "add-flow", switch.name, "priority=0,actions=NORMAL"], check=False)
 
     # Bridge the physical interface and set Gateway IP
-    VM_IFACE = "enp0s3"
+    VM_IFACE = "eth0"
     info(f"\n[+] Bridging {VM_IFACE} and setting gateway 10.0.0.100\n")
     
     # Assign the Gateway IP to the switch bridge
