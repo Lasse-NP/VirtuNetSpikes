@@ -85,6 +85,11 @@ def build_topo(zt_iface, subnet, num_hosts):
     info(f'*** Bridging OVS switch s1 <-> ZeroTier interface {zt_iface}\n')
     run(f'ovs-vsctl add-port s1 {zt_iface}')
 
+    # Enable promiscuous mode so the ZeroTier interface accepts frames from
+    # MiniNet's virtual MACs, not just its own MAC address.
+    run(f'ip link set {zt_iface} promisc on')
+    run(f'ip link set {zt_iface} up')
+
     # Bring ZeroTier iface up inside OVS (it should already be, but just in case)
     run(f'ip link set {zt_iface} up')
 
@@ -101,6 +106,8 @@ def build_topo(zt_iface, subnet, num_hosts):
     info('*** Stopping network\n')
     # Remove ZeroTier port before teardown to avoid OVS complaints
     run(f'ovs-vsctl del-port s1 {zt_iface}', check=False)
+    # Restore normal (non-promiscuous) mode on exit.
+    run(f'ip link set {zt_iface} promisc off', check=False)
     net.stop()
 
 
